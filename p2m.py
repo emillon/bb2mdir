@@ -2,6 +2,7 @@ from BeautifulSoup import BeautifulSoup
 from mailbox import Maildir, MaildirMessage
 from datetime import datetime
 import time
+from html2text import html2text
 
 doc = open('ex.html').read()
 
@@ -23,12 +24,18 @@ def findAuthor(s):
 md=Maildir('out')
 
 for s in soup.findAll('div', 'blockpost'):
+    print s['id']
     m = MaildirMessage()
 
     m['Date'] = findDate(s).strftime("%a, %d %b %Y %H:%M:%S %z")
     m['From'] = '%s <nobody@localhost>' % findAuthor(s)
+    m['Subject'] = s.find('h3').text
 
-    m.set_payload(s.find('div', 'postmsg').text, 'UTF-8')
+
+    body = s.find('div', 'postmsg')
+    body = html2text(str(body).decode('utf-8'))
+
+    m.set_payload(body, 'UTF-8')
 
     md.add(m)
 
