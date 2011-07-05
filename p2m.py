@@ -31,12 +31,12 @@ def parseDiv(s):
 
     return m
 
-doc = open('ex.html').read()
-soup = BeautifulSoup(doc)
-md = Maildir('out')
+if __name__ == "__main__":
+    doc = open('ex.html').read()
+    soup = BeautifulSoup(doc)
+    md = Maildir('out')
 
-for s in soup.findAll('div', 'blockpost'):
-    print s['id']
-    m = parseDiv(s)
-    md.add(m)
-
+    for s in soup.findAll('div', 'blockpost'):
+        print s['id']
+        m = parseDiv(s)
+        md.add(m)
