@@ -33,3 +33,8 @@ def parse_div(soup):
 
     return msg
 
+def handle(soup, maildir):
+    "Handle a whole HTML document"
+    for msg_soup in soup.findAll('div', 'blockpost'):
+        msg = parse_div(msg_soup)
+        maildir.add(msg)

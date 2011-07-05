@@ -14,15 +14,17 @@ from BeautifulSoup import BeautifulSoup
 from mailbox import Maildir
 from bb2mdir import punbb
 
+def process_bb(doc, maildir):
+    soup = BeautifulSoup(doc)
+    punbb.handle(soup, maildir)
+
 def main():
     "Program entry point"
-    doc = open('ex.html').read()
-    soup = BeautifulSoup(doc)
-    maildir = Maildir('out')
 
-    for msg_soup in soup.findAll('div', 'blockpost'):
-        msg = punbb.parse_div(msg_soup)
-        maildir.add(msg)
+    doc = open('ex.html').read()
+    maildir = Maildir('out')
+    process_bb(doc, maildir)
+
 
 if __name__ == "__main__":
     main()
