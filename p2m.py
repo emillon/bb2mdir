@@ -31,7 +31,7 @@ def parseDiv(s):
 
     return m
 
-if __name__ == "__main__":
+def main():
     doc = open('ex.html').read()
     soup = BeautifulSoup(doc)
     md = Maildir('out')
@@ -40,3 +40,6 @@ if __name__ == "__main__":
         print s['id']
         m = parseDiv(s)
         md.add(m)
+
+if __name__ == "__main__":
+    main()
