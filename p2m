@@ -1,3 +1,5 @@
+#!/usr/bin/env python2.7
+
 """
 A *BB parser that outputs a maildir.
 
@@ -13,6 +15,7 @@ think this stuff is worth it, you can buy me a beer in return.
 from BeautifulSoup import BeautifulSoup
 from mailbox import Maildir
 from bb2mdir import punbb
+import argparse
 
 def process_bb(doc, maildir):
     soup = BeautifulSoup(doc)
@@ -21,9 +24,16 @@ def process_bb(doc, maildir):
 def main():
     "Program entry point"
 
-    doc = open('ex.html').read()
-    maildir = Maildir('out')
+    parser = argparse.ArgumentParser(description='A *BB crawler')
+    parser.add_argument('input_file', metavar='FILE')
+    parser.add_argument('-o', dest='output', required=True, metavar='DIR')
+
+    args = parser.parse_args()
+
+    doc = open(args.input_file).read()
+    maildir = Maildir(args.output)
     process_bb(doc, maildir)
+
 
 
 if __name__ == "__main__":
