@@ -1,5 +1,5 @@
 """
-A PunBB parser that outputs a maildir.
+A *BB parser that outputs a maildir.
 
 Copyright (c) 2011 Etienne Millon <etienne.millon@gmail.com>
 ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@ think this stuff is worth it, you can buy me a beer in return.
 """
 
 from BeautifulSoup import BeautifulSoup
-from mailbox import Maildir, MaildirMessage
+from mailbox import Maildir
 from bb2mdir import punbb
 
 def main():

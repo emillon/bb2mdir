@@ -1,4 +1,8 @@
-from mailbox import Maildir, MaildirMessage
+"""
+Code specific to punBB.
+"""
+
+from mailbox import MaildirMessage
 from datetime import datetime
 from html2text import html2text
 
