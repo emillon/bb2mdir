@@ -1,45 +1,56 @@
+"""
+A PunBB parser that outputs a maildir.
+
+Copyright (c) 2011 Etienne Millon <etienne.millon@gmail.com>
+----------------------------------------------------------------------------
+                       "THE BEER-WARE LICENSE"
+<etienne.millon@gmail.com> wrote this file. As long as you retain this notice
+you can do whatever you want with this stuff. If we meet some day, and you
+think this stuff is worth it, you can buy me a beer in return.
+----------------------------------------------------------------------------
+"""
+
 from BeautifulSoup import BeautifulSoup
 from mailbox import Maildir, MaildirMessage
 from datetime import datetime
-import time
 from html2text import html2text
 
-def findDate(s):
-    dateStr = s.find('a').text
+def find_date(soup):
+    "Return the date of a message as a datetime object"
+    date = soup.find('a').text
 
-    if dateStr.startswith('Today'):
+    if date .startswith('Today'):
         today = datetime.today().strftime('%Y-%m-%d')
-        dateStr = today + dateStr[5:]
+        date = today + date[5:]
 
-    date = datetime.strptime(dateStr, '%Y-%m-%d %H:%M:%S')
+    date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
     return date
 
-def findAuthor(s):
-    return s.find('strong').text
+def parse_div(soup):
+    "Parses a message div (class blockpost) and return a MaildirMessage"
+    print soup['id']
+    msg = MaildirMessage()
 
-def parseDiv(s):
-    m = MaildirMessage()
+    msg['Date'] = find_date(soup).strftime("%a, %d %b %Y %H:%M:%S %z")
+    msg['From'] = '%s <nobody@localhost>' % soup.find('strong').text
+    msg['Subject'] = soup.find('h3').text
 
-    m['Date'] = findDate(s).strftime("%a, %d %b %Y %H:%M:%S %z")
-    m['From'] = '%s <nobody@localhost>' % findAuthor(s)
-    m['Subject'] = s.find('h3').text
-
-    body = s.find('div', 'postmsg')
+    body = soup.find('div', 'postmsg')
     body = html2text(str(body).decode('utf-8'))
 
-    m.set_payload(body, 'UTF-8')
+    msg.set_payload(body, 'UTF-8')
 
-    return m
+    return msg
 
 def main():
+    "Program entry point"
     doc = open('ex.html').read()
     soup = BeautifulSoup(doc)
-    md = Maildir('out')
+    maildir = Maildir('out')
 
-    for s in soup.findAll('div', 'blockpost'):
-        print s['id']
-        m = parseDiv(s)
-        md.add(m)
+    for msg_soup in soup.findAll('div', 'blockpost'):
+        msg = parse_div(msg_soup)
+        maildir.add(msg)
 
 if __name__ == "__main__":
     main()
