@@ -34,7 +34,5 @@ def main():
     maildir = Maildir(args.output)
     process_bb(doc, maildir)
 
-
-
 if __name__ == "__main__":
     main()
