@@ -4,10 +4,6 @@ from datetime import datetime
 import time
 from html2text import html2text
 
-doc = open('ex.html').read()
-
-soup = BeautifulSoup(doc)
-
 def findDate(s):
     dateStr = s.find('a').text
 
@@ -21,22 +17,26 @@ def findDate(s):
 def findAuthor(s):
     return s.find('strong').text
 
-md=Maildir('out')
-
-for s in soup.findAll('div', 'blockpost'):
-    print s['id']
+def parseDiv(s):
     m = MaildirMessage()
 
     m['Date'] = findDate(s).strftime("%a, %d %b %Y %H:%M:%S %z")
     m['From'] = '%s <nobody@localhost>' % findAuthor(s)
     m['Subject'] = s.find('h3').text
 
-
     body = s.find('div', 'postmsg')
     body = html2text(str(body).decode('utf-8'))
 
     m.set_payload(body, 'UTF-8')
 
+    return m
+
+doc = open('ex.html').read()
+soup = BeautifulSoup(doc)
+md = Maildir('out')
+
+for s in soup.findAll('div', 'blockpost'):
+    print s['id']
+    m = parseDiv(s)
     md.add(m)
 
-    
