@@ -12,75 +12,57 @@ think this stuff is worth it, you can buy me a beer in return.
 ----------------------------------------------------------------------------
 """
 
-from BeautifulSoup import BeautifulSoup
 from mailbox import Maildir
 from bb2mdir import punbb
-import argparse
 import json
 import os.path
 
-conf_fn = os.path.expanduser('~/.bb2mdir/bb2mdir.conf')
-id_fn = os.path.expanduser('~/.bb2mdir/bb2mdir.ids')
-
-def process_bb(doc, maildir):
-    soup = BeautifulSoup(doc)
-    punbb.handle(soup, maildir)
+CONF_FN = os.path.expanduser('~/.bb2mdir/bb2mdir.conf')
+IDS_FN = os.path.expanduser('~/.bb2mdir/bb2mdir.ids')
 
 def parse_json(filename):
-    f = open(filename)
-    s = f.read()
-    data = json.loads(s)
-    f.close()
-    assert(data['version'] == 1)
-    return data
+    "Read JSON data from a file"
+    json_file = open(filename)
+    json_data = json.loads(json_file.read())
+    json_file.close()
+    assert(json_data['version'] == 1)
+    return json_data
 
 def get_config():
-    return parse_json(conf_fn)
+    "Get the application's configuration from CONF_FN"
+    return parse_json(CONF_FN)
 
 def get_ids():
-    return parse_json(id_fn)
+    "Get the application's state from IDS_FN"
+    return parse_json(IDS_FN)
 
-def set_ids(i):
-    s = json.dumps(i)
-    f = open(id_fn, 'w')
-    f.write(s)
-    f.close()
+def set_ids(ids):
+    "Set the application's state"
+    state_str = json.dumps(ids)
+    state_file = open(IDS_FN, 'w')
+    state_file.write(state_str)
+    state_file.close()
 
-def refresh_thread(site, thread, ids):
-
-    maxpage = get_maxpage(site, thread)
-
-    return ids
-
-def build_thread_handler(s, t, md):
-    assert (s['engine'] == 'punbb')
-    return punbb.PunbbThread(s, t, md)
+def build_thread_handler(site, thread, maildir):
+    "A factory of *BBThreads"
+    assert (site['engine'] == 'punbb')
+    return punbb.PunbbThread(site, thread, maildir)
 
 def main():
     "Program entry point"
 
-    #parser = argparse.ArgumentParser(description='A *BB crawler')
-    #parser.add_argument('input_file', metavar='FILE')
-    #parser.add_argument('-o', dest='output', required=True, metavar='DIR')
-    #args = parser.parse_args()
+    conf = get_config()
+    ids = get_ids()
 
-    #doc = open(args.input_file).read()
-    #maildir = Maildir(args.output)
-    #process_bb(doc, maildir)
+    for site in conf['sites']:
+        print "%s..." % site['name']
+        maildir = Maildir(site['name'])
+        for thread in site['threads']:
+            print "  [%d]" % thread
+            hdl = build_thread_handler(site, thread, maildir)
+            ids = hdl.refresh(ids)
 
-    c = get_config()
-
-    i = get_ids()
-
-    for s in c['sites']:
-        print "%s..." % s['name']
-        md = Maildir(s['name'])
-        for t in s['threads']:
-            print "  [%d]" % t
-            hdl = build_thread_handler(s, t, md)
-            i = hdl.refresh(i)
-
-    set_ids(i)
+    set_ids(ids)
 
 if __name__ == "__main__":
     main()

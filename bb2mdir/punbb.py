@@ -25,8 +25,9 @@ def parse_div(soup):
     print soup['id']
     msg = MaildirMessage()
 
-    def encode(x):
-        return Header(x, 'UTF-8')
+    def encode(data):
+        "Create a header encoded as UTF-8"
+        return Header(data, 'UTF-8')
 
     msg['Date'] = find_date(soup).strftime("%a, %d %b %Y %H:%M:%S %z")
     msg['From'] = encode('%s <nobody@localhost>' % soup.find('strong').text)
@@ -39,21 +40,16 @@ def parse_div(soup):
 
     return msg
 
-def handle(soup, maildir):
-    "Handle a whole HTML document"
-    for msg_soup in soup.findAll('div', 'blockpost'):
-        msg = parse_div(msg_soup)
-        maildir.add(msg)
-
 def parse_max_page(soup):
-    p = int(soup.find('p', 'pagelink').findAll('a')[-1].text)
-    print "Max page : %d" % p
-    return p
+    "Compute the last page number in a thread"
+    return int(soup.find('p', 'pagelink').findAll('a')[-1].text)
 
 def msgs_on_page(soup):
+    "All the message divs in a page"
     return soup.findAll('div', 'blockpost')
 
 class PunbbThread:
+    "A PunBB thread"
 
     def __init__(self, site, thread, maildir):
         self.site = site
@@ -61,11 +57,21 @@ class PunbbThread:
         self.maildir = maildir
 
     def url(self, page=1):
-        return "%s/viewtopic.php?id=%d&page=%d" % (self.site['url'], self.thread, page)
+        "The URL for a given page (default 1) in this thread"
+        print "get page %d" % page
+        return "%s/viewtopic.php?id=%d&p=%d" % ( self.site['url']
+                                               , self.thread
+                                               , page
+                                               )
 
     def refresh(self, ids):
+        "Refresh the current maildir with respect to this thread"
 
-        max_id = next((x['id'] for x in ids['sites'] if x['name'] == self.site), None)
+        max_id = next((x['id'] for x in ids['sites']
+                               if x['name'] == self.site['name']
+                      ), None)
+
+        print max_id
 
         page_one = urllib.urlopen(self.url()).read()
         max_page = parse_max_page(BeautifulSoup(page_one))
@@ -74,19 +80,18 @@ class PunbbThread:
 
         done = False
 
-        while not done:
+        while (done == False):
             page = urllib.urlopen(self.url(page=page_num)).read()
             soup = BeautifulSoup(page)
             msgs = msgs_on_page(soup)
 
             for msg in msgs:
                 msg_id = int(msg['id'][1:])
-                print "msg_id = %d" % msg_id
-                if msg_id <= ids:
+                if msg_id <= max_id:
                     done = True
-
-                msg = parse_div(msg)
-                self.maildir.add(msg)
+                else:
+                    msg = parse_div(msg)
+                    self.maildir.add(msg)
 
             page_num -= 1
             if page_num == 0:
