@@ -16,23 +16,71 @@ from BeautifulSoup import BeautifulSoup
 from mailbox import Maildir
 from bb2mdir import punbb
 import argparse
+import json
+import os.path
+
+conf_fn = os.path.expanduser('~/.bb2mdir/bb2mdir.conf')
+id_fn = os.path.expanduser('~/.bb2mdir/bb2mdir.ids')
 
 def process_bb(doc, maildir):
     soup = BeautifulSoup(doc)
     punbb.handle(soup, maildir)
 
+def parse_json(filename):
+    f = open(filename)
+    s = f.read()
+    data = json.loads(s)
+    f.close()
+    assert(data['version'] == 1)
+    return data
+
+def get_config():
+    return parse_json(conf_fn)
+
+def get_ids():
+    return parse_json(id_fn)
+
+def set_ids(i):
+    s = json.dumps(i)
+    f = open(id_fn, 'w')
+    f.write(s)
+    f.close()
+
+def refresh_thread(site, thread, ids):
+
+    maxpage = get_maxpage(site, thread)
+
+    return ids
+
+def build_thread_handler(s, t, md):
+    assert (s['engine'] == 'punbb')
+    return punbb.PunbbThread(s, t, md)
+
 def main():
     "Program entry point"
 
-    parser = argparse.ArgumentParser(description='A *BB crawler')
-    parser.add_argument('input_file', metavar='FILE')
-    parser.add_argument('-o', dest='output', required=True, metavar='DIR')
+    #parser = argparse.ArgumentParser(description='A *BB crawler')
+    #parser.add_argument('input_file', metavar='FILE')
+    #parser.add_argument('-o', dest='output', required=True, metavar='DIR')
+    #args = parser.parse_args()
 
-    args = parser.parse_args()
+    #doc = open(args.input_file).read()
+    #maildir = Maildir(args.output)
+    #process_bb(doc, maildir)
 
-    doc = open(args.input_file).read()
-    maildir = Maildir(args.output)
-    process_bb(doc, maildir)
+    c = get_config()
+
+    i = get_ids()
+
+    for s in c['sites']:
+        print "%s..." % s['name']
+        md = Maildir(s['name'])
+        for t in s['threads']:
+            print "  [%d]" % t
+            hdl = build_thread_handler(s, t, md)
+            i = hdl.refresh(i)
+
+    set_ids(i)
 
 if __name__ == "__main__":
     main()
