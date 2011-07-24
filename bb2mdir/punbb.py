@@ -64,14 +64,12 @@ class PunbbThread:
                                                , page
                                                )
 
-    def refresh(self, ids):
+    def refresh(self, max_seen):
         "Refresh the current maildir with respect to this thread"
 
-        max_id = next((x['id'] for x in ids['sites']
-                               if x['name'] == self.site['name']
-                      ), None)
+        old_max_seen = max_seen
 
-        print max_id
+        print max_seen
 
         page_one = urllib.urlopen(self.url()).read()
         max_page = parse_max_page(BeautifulSoup(page_one))
@@ -87,9 +85,10 @@ class PunbbThread:
 
             for msg in msgs:
                 msg_id = int(msg['id'][1:])
-                if msg_id <= max_id:
+                if msg_id <= old_max_seen:
                     done = True
                 else:
+                    max_seen = msg_id
                     msg = parse_div(msg)
                     self.maildir.add(msg)
 
@@ -97,5 +96,5 @@ class PunbbThread:
             if page_num == 0:
                 done = True
 
-        return ids
+        return max_seen
 

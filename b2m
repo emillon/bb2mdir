@@ -62,7 +62,7 @@ def main():
         for thread in site['threads']:
             print "  [%d]" % thread
             hdl = build_thread_handler(site, thread, maildir)
-            ids = hdl.refresh(ids)
+            ids['sites'][site['name']] = hdl.refresh(ids['sites'][site['name']])
 
     set_ids(ids)
 
